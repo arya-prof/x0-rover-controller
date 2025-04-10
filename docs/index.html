@@ -274,7 +274,7 @@
     
     <header>
         <h1 lang="en">x0 Rover Controller Documentation</h1>
-        <h1 lang="fa">مستندات کنترلر مریخ‌نورد x0</h1>
+        <h1 lang="fa">مستندات کنترلر ماه‌نورد x0</h1>
         <p class="subtitle" lang="en">to the moon team</p>
         <p class="subtitle" lang="fa">گروه to the moon</p>
     </header>
@@ -284,20 +284,20 @@
         <h2 lang="fa">معرفی کلی</h2>
         
         <p lang="en">The x0 Rover Controller is a PyQt5-based GUI application designed to control a rover robot. It features:</p>
-        <p lang="fa">کنترلر مریخ‌نورد x0 یک برنامه گرافیکی مبتنی بر PyQt5 برای کنترل ربات مریخ‌نورد است که دارای ویژگی‌های زیر می‌باشد:</p>
+        <p lang="fa">کنترلر ماه‌نورد x0 یک برنامه گرافیکی مبتنی بر PyQt5 برای کنترل ربات ماه‌نورد است که دارای ویژگی‌های زیر می‌باشد:</p>
         
         <ul>
             <li lang="en">Real-time camera feed display</li>
             <li lang="fa">نمایش زنده تصویر دوربین</li>
             
             <li lang="en">Interactive controls for rover movement and arm manipulation</li>
-            <li lang="fa">کنترل‌های تعاملی برای حرکت مریخ‌نورد و دست رباتیک</li>
+            <li lang="fa">کنترل‌های تعاملی برای حرکت ماه‌نورد و دست رباتیک</li>
             
             <li lang="en">Telemetry data visualization</li>
             <li lang="fa">نمایش داده‌های تلهمتری</li>
             
             <li lang="en">WebSocket communication with the rover</li>
-            <li lang="fa">ارتباط از طریق WebSocket با مریخ‌نورد</li>
+            <li lang="fa">ارتباط از طریق WebSocket با ماه‌نورد</li>
             
             <li lang="en">Keyboard and mouse controls</li>
             <li lang="fa">کنترل از طریق صفحه کلید و ماوس</li>
@@ -335,7 +335,7 @@
                 <div class="ui-title" lang="en">Camera Feed</div>
                 <div class="ui-title" lang="fa">نمایشگر دوربین</div>
                 <p lang="en">Displays real-time video from the rover's camera (default webcam in development mode).</p>
-                <p lang="fa">نمایش زنده تصاویر دوربین مریخ‌نورد (در حالت توسعه از وب‌کم پیش‌فرض استفاده می‌کند).</p>
+                <p lang="fa">نمایش زنده تصاویر دوربین ماه‌نورد (در حالت توسعه از وب‌کم پیش‌فرض استفاده می‌کند).</p>
                 
                 <p lang="en">Features automatic scaling to fit the available space while maintaining aspect ratio.</p>
                 <p lang="fa">دارای قابلیت تغییر اندازه خودکار با حفظ نسبت تصویر.</p>
@@ -345,7 +345,7 @@
                 <div class="ui-title" lang="en">Movement Controls</div>
                 <div class="ui-title" lang="fa">کنترل‌های حرکتی</div>
                 <p lang="en">D-pad style buttons for rover movement:</p>
-                <p lang="fa">دکمه‌های شبیه به D-pad برای حرکت مریخ‌نورد:</p>
+                <p lang="fa">دکمه‌های شبیه به D-pad برای حرکت ماه‌نورد:</p>
                 <ul>
                     <li lang="en">Forward/Backward</li>
                     <li lang="fa">جلو/عقب</li>
@@ -400,7 +400,7 @@
                 <div class="ui-title" lang="en">Telemetry Display</div>
                 <div class="ui-title" lang="fa">نمایش تلهمتری</div>
                 <p lang="en">Shows detailed rover status including:</p>
-                <p lang="fa">اطلاعات دقیق وضعیت مریخ‌نورد شامل:</p>
+                <p lang="fa">اطلاعات دقیق وضعیت ماه‌نورد شامل:</p>
                 <ul>
                     <li lang="en">Battery percentage</li>
                     <li lang="fa">درصد باتری</li>
@@ -513,7 +513,7 @@
             <h3 lang="en">RoverGUI</h3>
             <h3 lang="fa">RoverGUI</h3>
             <p lang="en">Main application window that contains all UI components and handles rover communication.</p>
-            <p lang="fa">پنجره اصلی برنامه که شامل تمام اجزای رابط کاربری بوده و ارتباط با مریخ‌نورد را مدیریت می‌کند.</p>
+            <p lang="fa">پنجره اصلی برنامه که شامل تمام اجزای رابط کاربری بوده و ارتباط با ماه‌نورد را مدیریت می‌کند.</p>
             
             <div class="method">
                 <div class="method-name">init_ui()</div>
@@ -530,7 +530,7 @@
             <div class="method">
                 <div class="method-name">send_cmd(cmd_type, data)</div>
                 <div class="method-desc" lang="en">Sends a command to the rover via WebSocket.</div>
-                <div class="method-desc" lang="fa">یک دستور را از طریق WebSocket به مریخ‌نورد ارسال می‌کند.</div>
+                <div class="method-desc" lang="fa">یک دستور را از طریق WebSocket به ماه‌نورد ارسال می‌کند.</div>
                 <div class="params">
                     <span class="param-name">cmd_type</span>: 
                     <span lang="en">Command type (e.g., "move", "arm")</span>
@@ -545,7 +545,7 @@
             <div class="method">
                 <div class="method-name">receive_data()</div>
                 <div class="method-desc" lang="en">Asynchronously receives and processes telemetry data from the rover.</div>
-                <div class="method-desc" lang="fa">داده‌های تلهمتری را به صورت غیرهمزمان از مریخ‌نورد دریافت و پردازش می‌کند.</div>
+                <div class="method-desc" lang="fa">داده‌های تلهمتری را به صورت غیرهمزمان از ماه‌نورد دریافت و پردازش می‌کند.</div>
             </div>
             
             <div class="method">
@@ -557,7 +557,7 @@
             <div class="method">
                 <div class="method-name">keyPressEvent(event)</div>
                 <div class="method-desc" lang="en">Handles keyboard input for rover control.</div>
-                <div class="method-desc" lang="fa">ورودی صفحه کلید برای کنترل مریخ‌نورد را مدیریت می‌کند.</div>
+                <div class="method-desc" lang="fa">ورودی صفحه کلید برای کنترل ماه‌نورد را مدیریت می‌کند.</div>
             </div>
             
             <div class="method">
@@ -574,7 +574,7 @@
         
         <div class="note">
             <p lang="en">The application communicates with the rover using WebSocket (ws://localhost:8765) and JSON messages.</p>
-            <p lang="fa">برنامه با مریخ‌نورد از طریق WebSocket (ws://localhost:8765) و پیام‌های JSON ارتباط برقرار می‌کند.</p>
+            <p lang="fa">برنامه با ماه‌نورد از طریق WebSocket (ws://localhost:8765) و پیام‌های JSON ارتباط برقرار می‌کند.</p>
         </div>
         
         <h3 lang="en">Command Structure</h3>
@@ -591,7 +591,7 @@
         <ul>
             <li>
                 <span lang="en"><strong>move</strong> - Controls rover movement</span>
-                <span lang="fa"><strong>move</strong> - کنترل حرکت مریخ‌نورد</span>
+                <span lang="fa"><strong>move</strong> - کنترل حرکت ماه‌نورد</span>
                 <div class="code-block">
 {
     "cmd": "move",
@@ -602,7 +602,7 @@
             </li>
             <li>
                 <span lang="en"><strong>arm</strong> - Controls the rover arm</span>
-                <span lang="fa"><strong>arm</strong> - کنترل بازوی مریخ‌نورد</span>
+                <span lang="fa"><strong>arm</strong> - کنترل بازوی ماه‌نورد</span>
                 <div class="code-block">
 {
     "cmd": "arm",

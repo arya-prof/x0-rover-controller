@@ -78,6 +78,13 @@ class RoverGUI(QWidget):
         self.speed_factor = 1  # Normal speed by default
         self.last_telemetry = {}
 
+        # Keyboard controls
+        self.pressed_keys = set()
+        self.movement_timer = QTimer()
+        self.movement_timer.timeout.connect(self.handle_movement_keys)
+        self.movement_timer.start(100)  # Check keys every 100ms
+        self.setFocusPolicy(Qt.StrongFocus)  # Ensure widget receives key events
+
     def init_ui(self):
         # Main layout
         main_layout = QHBoxLayout()
@@ -97,7 +104,7 @@ class RoverGUI(QWidget):
         main_layout.addLayout(left_panel, 30)  # 30% width
         main_layout.addLayout(right_panel, 70)  # 70% width
 
-        # ========== LEFT PANEL CONTROLS ========== #
+        # ========== LEFT PANEL CONTROLS ========== 
         
         # Battery status group
         battery_group = QGroupBox("Rover Status")
@@ -128,9 +135,9 @@ class RoverGUI(QWidget):
         speed_layout.addWidget(self.speed_display_label)
         
         # Speed buttons
-        self.normal_speed_btn = self.create_speed_button("Normal Speed", "normal")
-        self.object_speed_btn = self.create_speed_button("Object Speed", "object")
-        self.fast_speed_btn = self.create_speed_button("Fast Speed", "fast")
+        self.normal_speed_btn = self.create_speed_button("Normal Speed (1)", "normal")
+        self.object_speed_btn = self.create_speed_button("Object Speed (2)", "object")
+        self.fast_speed_btn = self.create_speed_button("Fast Speed (3)", "fast")
         
         speed_layout.addWidget(self.normal_speed_btn)
         speed_layout.addWidget(self.object_speed_btn)
@@ -140,7 +147,7 @@ class RoverGUI(QWidget):
         left_panel.addWidget(speed_group)
 
         # Movement controls group
-        move_group = QGroupBox("Movement Controls")
+        move_group = QGroupBox("Movement Controls (WASD/Arrows)")
         move_layout = QVBoxLayout()
         
         # Create a grid for movement buttons
@@ -166,7 +173,7 @@ class RoverGUI(QWidget):
         left_panel.addWidget(move_group)
 
         # Arm control group
-        arm_group = QGroupBox("Arm Control")
+        arm_group = QGroupBox("Arm Control (Q/E)")
         arm_layout = QVBoxLayout()
         
         self.arm_slider = QSlider(Qt.Horizontal)
@@ -181,7 +188,7 @@ class RoverGUI(QWidget):
         self.lbl_arm.setAlignment(Qt.AlignCenter)
         
         # Add Drop Flag button
-        self.drop_flag_btn = QPushButton("Drop Flag")
+        self.drop_flag_btn = QPushButton("Drop Flag (F)")
         self.drop_flag_btn.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
         self.drop_flag_btn.setStyleSheet("""
             QPushButton {
@@ -215,7 +222,7 @@ class RoverGUI(QWidget):
         self.screenshot_btn.setIcon(self.style().standardIcon(QStyle.SP_DesktopIcon))
         self.screenshot_btn.clicked.connect(self.take_screenshot)
         
-        self.take_photo_btn = QPushButton("Take Photo")
+        self.take_photo_btn = QPushButton("Take Photo (P)")
         self.take_photo_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
         self.take_photo_btn.clicked.connect(self.take_photo)
         
@@ -227,7 +234,7 @@ class RoverGUI(QWidget):
         # Add stretch to push everything up
         left_panel.addStretch()
 
-        # ========== RIGHT PANEL CAMERA/TELEMETRY ========== #
+        # ========== RIGHT PANEL CAMERA/TELEMETRY ========== 
         
         # Camera preview
         camera_group = QGroupBox("Camera Feed")
@@ -496,6 +503,101 @@ class RoverGUI(QWidget):
                 cv2.imwrite(filename, frame)  # Save frame to file
         else:
             self.telemetry_label.setText("Error capturing photo.")
+
+    def keyPressEvent(self, event):
+        """Handle key press events for movement controls."""
+        key = event.key()
+        
+        # Movement keys (WASD and arrows)
+        if key in (Qt.Key_W, Qt.Key_Up):
+            self.pressed_keys.add('forward')
+        elif key in (Qt.Key_S, Qt.Key_Down):
+            self.pressed_keys.add('backward')
+        elif key in (Qt.Key_A, Qt.Key_Left):
+            self.pressed_keys.add('left')
+        elif key in (Qt.Key_D, Qt.Key_Right):
+            self.pressed_keys.add('right')
+        
+        # Speed control keys (1, 2, 3)
+        elif key == Qt.Key_1:
+            self.set_normal_speed()
+        elif key == Qt.Key_2:
+            self.set_object_speed()
+        elif key == Qt.Key_3:
+            self.set_fast_speed()
+            
+        # Arm control keys (Q/E for up/down)
+        elif key == Qt.Key_Q:
+            new_value = min(self.arm_slider.value() + 5, 180)
+            self.arm_slider.setValue(new_value)
+        elif key == Qt.Key_E:
+            new_value = max(self.arm_slider.value() - 5, 0)
+            self.arm_slider.setValue(new_value)
+            
+        # Space for stop
+        elif key == Qt.Key_Space:
+            self.pressed_keys.clear()
+            self.send_cmd("move", {"dir": "stop"})
+        
+        # F for flag drop
+        elif key == Qt.Key_F:
+            self.drop_flag()
+            
+        # P for photo
+        elif key == Qt.Key_P:
+            self.take_photo()
+            
+        # Escape to exit
+        elif key == Qt.Key_Escape:
+            self.close()
+            
+        event.accept()
+
+    def keyReleaseEvent(self, event):
+        """Handle key release events."""
+        key = event.key()
+        
+        if key in (Qt.Key_W, Qt.Key_Up):
+            self.pressed_keys.discard('forward')
+        elif key in (Qt.Key_S, Qt.Key_Down):
+            self.pressed_keys.discard('backward')
+        elif key in (Qt.Key_A, Qt.Key_Left):
+            self.pressed_keys.discard('left')
+        elif key in (Qt.Key_D, Qt.Key_Right):
+            self.pressed_keys.discard('right')
+            
+        # If no movement keys are pressed, stop the rover
+        if not self.pressed_keys:
+            self.send_cmd("move", {"dir": "stop"})
+            
+        event.accept()
+
+    def handle_movement_keys(self):
+        """Handle continuous movement based on pressed keys."""
+        if not self.pressed_keys:
+            return
+            
+        # Determine primary direction based on pressed keys
+        if 'forward' in self.pressed_keys and 'left' in self.pressed_keys:
+            direction = "forward_left"
+        elif 'forward' in self.pressed_keys and 'right' in self.pressed_keys:
+            direction = "forward_right"
+        elif 'backward' in self.pressed_keys and 'left' in self.pressed_keys:
+            direction = "backward_left"
+        elif 'backward' in self.pressed_keys and 'right' in self.pressed_keys:
+            direction = "backward_right"
+        elif 'forward' in self.pressed_keys:
+            direction = "forward"
+        elif 'backward' in self.pressed_keys:
+            direction = "backward"
+        elif 'left' in self.pressed_keys:
+            direction = "left"
+        elif 'right' in self.pressed_keys:
+            direction = "right"
+        else:
+            direction = "stop"
+            
+        self.send_cmd("move", {"dir": direction})
 
     def closeEvent(self, event):
         self.cap.release()

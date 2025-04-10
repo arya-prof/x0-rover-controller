@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>x0 Rover Controller Documentation | مستندات کنترلر ماه‌نورد</title>
+    <style>
+        :root {
+            --primary: #5a8;
+            --secondary: #496;
+            --dark: #333;
+            --darker: #222;
+            --light: #eee;
+            --danger: #d9534f;
+            --warning: #f0ad4e;
+            --info: #5bc0de;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        /* Language toggle */
+        .lang-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .lang-toggle button[lang] {
+            display: inline-block !important;
+            margin: 0 2px;
+            background: none;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .lang-toggle button.active {
+            background: var(--primary);
+            color: white;
+            border-radius: 15px;
+        }
+        
+        .lang-toggle button:hover:not(.active) {
+            background: var(--light);
+            border-radius: 15px;
+        }
+        
+        .lang-toggle button[lang="fa"] {
+            font-family: 'Tahoma', sans-serif;
+        }
+        
+        /* RTL support */
+        body[dir="rtl"] {
+            direction: rtl;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Tahoma';
+        }
+        
+        body[dir="rtl"] .method {
+            margin-left: 0;
+            margin-right: 20px;
+            padding-left: 0;
+            padding-right: 15px;
+            border-left: none;
+            border-right: 2px solid #ddd;
+        }
+        
+        body[dir="rtl"] .params {
+            margin-left: 0;
+            margin-right: 20px;
+        }
+        
+        body[dir="rtl"] .code-block {
+            border-left: none;
+            border-right: 4px solid var(--primary);
+        }
+        
+        body[dir="rtl"] .note,
+        body[dir="rtl"] .warning,
+        body[dir="rtl"] .danger {
+            border-left: none;
+            border-right: 4px solid var(--info);
+        }
+        
+        body[dir="rtl"] .warning {
+            border-right-color: var(--warning);
+        }
+        
+        body[dir="rtl"] .danger {
+            border-right-color: var(--danger);
+        }
+        
+        header {
+            background-color: var(--dark);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: white !important;  /* Force white color for header titles */
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        h2, h3 {
+            color: var(--dark);
+        }
+        
+        h2 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            margin-top: 25px;
+            color: var(--secondary);
+        }
+        
+        header .subtitle {
+            font-style: italic;
+            color: #ccc;
+        }
+        
+        .code-block {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+        
+        .class-container {
+            background: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .method {
+            margin-left: 20px;
+            padding-left: 15px;
+            border-left: 2px solid #ddd;
+        }
+        
+        .method-name {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .method-desc {
+            margin-bottom: 10px;
+        }
+        
+        .params {
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+        
+        .param-name {
+            font-style: italic;
+        }
+        
+        .returns {
+            font-weight: bold;
+        }
+        
+        .ui-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .ui-component {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .ui-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .keyboard-shortcuts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .shortcut {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .key {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--dark);
+            color: white;
+            border-radius: 3px;
+            font-family: monospace;
+            margin-right: 5px;
+        }
+        
+        .note {
+            background-color: #e7f4ff;
+            border-left: 4px solid var(--info);
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background-color: #fff8e6;
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .danger {
+            background-color: #fdecea;
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        /* Update the language display rules */
+        [lang="fa"]:not(.lang-toggle button) { display: none; }
+        [lang="en"]:not(.lang-toggle button) { display: block; }
+        body.persian [lang="fa"]:not(.lang-toggle button) { display: block; }
+        body.persian [lang="en"]:not(.lang-toggle button) { display: none; }
+    </style>
+</head>
+<body>
+    <div class="lang-toggle">
+        <button onclick="setLanguage('en')" class="active" lang="en">English</button>
+        <button onclick="setLanguage('fa')" lang="fa">فارسی</button>
+    </div>
+    
+    <header>
+        <h1 lang="en">x0 Rover Controller Documentation</h1>
+        <h1 lang="fa">مستندات کنترلر مریخ‌نورد x0</h1>
+        <p class="subtitle" lang="en">to the moon team</p>
+        <p class="subtitle" lang="fa">گروه to the moon</p>
+    </header>
+    
+    <section>
+        <h2 lang="en">Overview</h2>
+        <h2 lang="fa">معرفی کلی</h2>
+        
+        <p lang="en">The x0 Rover Controller is a PyQt5-based GUI application designed to control a rover robot. It features:</p>
+        <p lang="fa">کنترلر مریخ‌نورد x0 یک برنامه گرافیکی مبتنی بر PyQt5 برای کنترل ربات مریخ‌نورد است که دارای ویژگی‌های زیر می‌باشد:</p>
+        
+        <ul>
+            <li lang="en">Real-time camera feed display</li>
+            <li lang="fa">نمایش زنده تصویر دوربین</li>
+            
+            <li lang="en">Interactive controls for rover movement and arm manipulation</li>
+            <li lang="fa">کنترل‌های تعاملی برای حرکت مریخ‌نورد و دست رباتیک</li>
+            
+            <li lang="en">Telemetry data visualization</li>
+            <li lang="fa">نمایش داده‌های تلهمتری</li>
+            
+            <li lang="en">WebSocket communication with the rover</li>
+            <li lang="fa">ارتباط از طریق WebSocket با مریخ‌نورد</li>
+            
+            <li lang="en">Keyboard and mouse controls</li>
+            <li lang="fa">کنترل از طریق صفحه کلید و ماوس</li>
+        </ul>
+        
+        <div class="note">
+            <p lang="en">The application uses <code>qasync</code> to integrate PyQt5 with asyncio for asynchronous WebSocket communication.</p>
+            <p lang="fa">این برنامه از <code>qasync</code> برای ادغام PyQt5 با asyncio جهت ارتباط غیرهمزمان از طریق WebSocket استفاده می‌کند.</p>
+        </div>
+    </section>
+    
+    <section>
+        <h2 lang="en">UI Components</h2>
+        <h2 lang="fa">اجزای رابط کاربری</h2>
+        
+        <div class="ui-section">
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Circular Battery Indicator</div>
+                <div class="ui-title" lang="fa">نمایشگر دایره‌ای باتری</div>
+                <p lang="en">A custom QWidget that displays battery percentage in a circular progress bar format with color coding:</p>
+                <p lang="fa">یک ویجت سفارشی که درصد باتری را به صورت یک نوار پیشرفت دایره‌ای با کد رنگی نمایش می‌دهد:</p>
+                <ul>
+                    <li lang="en">Green: >60%</li>
+                    <li lang="fa">سبز: بیش از ۶۰٪</li>
+                    
+                    <li lang="en">Orange: 30-60%</li>
+                    <li lang="fa">نارنجی: ۳۰ تا ۶۰٪</li>
+                    
+                    <li lang="en">Red: <30%</li>
+                    <li lang="fa">قرمز: کمتر از ۳۰٪</li>
+                </ul>
+            </div>
+            
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Camera Feed</div>
+                <div class="ui-title" lang="fa">نمایشگر دوربین</div>
+                <p lang="en">Displays real-time video from the rover's camera (default webcam in development mode).</p>
+                <p lang="fa">نمایش زنده تصاویر دوربین مریخ‌نورد (در حالت توسعه از وب‌کم پیش‌فرض استفاده می‌کند).</p>
+                
+                <p lang="en">Features automatic scaling to fit the available space while maintaining aspect ratio.</p>
+                <p lang="fa">دارای قابلیت تغییر اندازه خودکار با حفظ نسبت تصویر.</p>
+            </div>
+            
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Movement Controls</div>
+                <div class="ui-title" lang="fa">کنترل‌های حرکتی</div>
+                <p lang="en">D-pad style buttons for rover movement:</p>
+                <p lang="fa">دکمه‌های شبیه به D-pad برای حرکت مریخ‌نورد:</p>
+                <ul>
+                    <li lang="en">Forward/Backward</li>
+                    <li lang="fa">جلو/عقب</li>
+                    
+                    <li lang="en">Left/Right</li>
+                    <li lang="fa">چپ/راست</li>
+                    
+                    <li lang="en">Stop button in center</li>
+                    <li lang="fa">دکمه توقف در مرکز</li>
+                </ul>
+                <p lang="en">Also supports keyboard controls (WASD/Arrow keys).</p>
+                <p lang="fa">همچنین از کنترل‌های صفحه کلید (WASD/کلیدهای جهت‌دار) پشتیبانی می‌کند.</p>
+            </div>
+            
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Arm Control</div>
+                <div class="ui-title" lang="fa">کنترل بازوی رباتیک</div>
+                <p lang="en">Includes:</p>
+                <p lang="fa">شامل:</p>
+                <ul>
+                    <li lang="en">Slider for precise angle control (0-180°)</li>
+                    <li lang="fa">اسلایدر برای کنترل دقیق زاویه (۰-۱۸۰ درجه)</li>
+                    
+                    <li lang="en">Keyboard controls (Q/E for fine adjustment)</li>
+                    <li lang="fa">کنترل از صفحه کلید (Q/E برای تنظیم دقیق)</li>
+                    
+                    <li lang="en">Drop flag button with warning styling</li>
+                    <li lang="fa">دکمه رها کردن پرچم با ظاهر هشداردهنده</li>
+                </ul>
+            </div>
+            
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Speed Control</div>
+                <div class="ui-title" lang="fa">کنترل سرعت</div>
+                <p lang="en">Three speed modes:</p>
+                <p lang="fa">سه حالت سرعت:</p>
+                <ol>
+                    <li lang="en">Normal (1x speed)</li>
+                    <li lang="fa">عادی (سرعت معمولی)</li>
+                    
+                    <li lang="en">Object (0.5x speed for precision)</li>
+                    <li lang="fa">دقیق (نصف سرعت برای دقت بیشتر)</li>
+                    
+                    <li lang="en">Fast (2x speed)</li>
+                    <li lang="fa">سریع (دو برابر سرعت)</li>
+                </ol>
+                <p lang="en">Each mode has dedicated button and keyboard shortcut.</p>
+                <p lang="fa">هر حالت دارای دکمه مخصوص و میانبر صفحه کلید است.</p>
+            </div>
+            
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Telemetry Display</div>
+                <div class="ui-title" lang="fa">نمایش تلهمتری</div>
+                <p lang="en">Shows detailed rover status including:</p>
+                <p lang="fa">اطلاعات دقیق وضعیت مریخ‌نورد شامل:</p>
+                <ul>
+                    <li lang="en">Battery percentage</li>
+                    <li lang="fa">درصد باتری</li>
+                    
+                    <li lang="en">Temperature</li>
+                    <li lang="fa">دما</li>
+                    
+                    <li lang="en">IMU orientation data</li>
+                    <li lang="fa">داده‌های جهت‌گیری IMU</li>
+                    
+                    <li lang="en">Arm position</li>
+                    <li lang="fa">موقعیت بازو</li>
+                    
+                    <li lang="en">Raw JSON telemetry</li>
+                    <li lang="fa">داده‌های خام JSON</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+    
+    <section>
+        <h2 lang="en">Keyboard Shortcuts</h2>
+        <h2 lang="fa">میانبرهای صفحه کلید</h2>
+        
+        <div class="keyboard-shortcuts">
+            <div class="shortcut">
+                <span lang="en"><span class="key">W</span> or <span class="key">↑</span> - Move forward</span>
+                <span lang="fa"><span class="key">W</span> یا <span class="key">↑</span> - حرکت به جلو</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">S</span> or <span class="key">↓</span> - Move backward</span>
+                <span lang="fa"><span class="key">S</span> یا <span class="key">↓</span> - حرکت به عقب</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">A</span> or <span class="key">←</span> - Move left</span>
+                <span lang="fa"><span class="key">A</span> یا <span class="key">←</span> - حرکت به چپ</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">D</span> or <span class="key">→</span> - Move right</span>
+                <span lang="fa"><span class="key">D</span> یا <span class="key">→</span> - حرکت به راست</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">Space</span> - Stop movement</span>
+                <span lang="fa"><span class="key">Space</span> - توقف حرکت</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">1</span> - Normal speed</span>
+                <span lang="fa"><span class="key">1</span> - سرعت عادی</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">2</span> - Object speed</span>
+                <span lang="fa"><span class="key">2</span> - سرعت دقیق</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">3</span> - Fast speed</span>
+                <span lang="fa"><span class="key">3</span> - سرعت بالا</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">Q</span> - Increase arm angle</span>
+                <span lang="fa"><span class="key">Q</span> - افزایش زاویه بازو</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">E</span> - Decrease arm angle</span>
+                <span lang="fa"><span class="key">E</span> - کاهش زاویه بازو</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">F</span> - Drop flag</span>
+                <span lang="fa"><span class="key">F</span> - رها کردن پرچم</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">P</span> - Take photo</span>
+                <span lang="fa"><span class="key">P</span> - گرفتن عکس</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">Esc</span> - Exit application</span>
+                <span lang="fa"><span class="key">Esc</span> - خروج از برنامه</span>
+            </div>
+        </div>
+    </section>
+    
+    <section>
+        <h2 lang="en">Class Documentation</h2>
+        <h2 lang="fa">مستندات کلاس‌ها</h2>
+        
+        <div class="class-container">
+            <h3 lang="en">CircularProgress</h3>
+            <h3 lang="fa">CircularProgress</h3>
+            <p lang="en">A custom QLabel that displays battery percentage as a circular progress bar.</p>
+            <p lang="fa">یک QLabel سفارشی که درصد باتری را به صورت یک نوار پیشرفت دایره‌ای نمایش می‌دهد.</p>
+            
+            <div class="method">
+                <div class="method-name">set_battery_percentage(percentage)</div>
+                <div class="method-desc" lang="en">Updates the battery percentage displayed in the widget.</div>
+                <div class="method-desc" lang="fa">درصد باتری نمایش داده شده در ویجت را به‌روز می‌کند.</div>
+                <div class="params">
+                    <span class="param-name">percentage</span>: 
+                    <span lang="en">Integer value (0-100) representing battery level</span>
+                    <span lang="fa">مقدار عددی (۰-۱۰۰) نشان‌دهنده سطح باتری</span>
+                </div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">paintEvent(event)</div>
+                <div class="method-desc" lang="en">Custom painting of the circular progress bar and percentage text.</div>
+                <div class="method-desc" lang="fa">رسم سفارشی نوار پیشرفت دایره‌ای و متن درصد.</div>
+            </div>
+        </div>
+        
+        <div class="class-container">
+            <h3 lang="en">RoverGUI</h3>
+            <h3 lang="fa">RoverGUI</h3>
+            <p lang="en">Main application window that contains all UI components and handles rover communication.</p>
+            <p lang="fa">پنجره اصلی برنامه که شامل تمام اجزای رابط کاربری بوده و ارتباط با مریخ‌نورد را مدیریت می‌کند.</p>
+            
+            <div class="method">
+                <div class="method-name">init_ui()</div>
+                <div class="method-desc" lang="en">Initializes all UI components and layouts.</div>
+                <div class="method-desc" lang="fa">تمامی اجزای رابط کاربری و چیدمان‌ها را مقداردهی می‌کند.</div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">update_camera()</div>
+                <div class="method-desc" lang="en">Updates the camera feed display with the latest frame from the webcam.</div>
+                <div class="method-desc" lang="fa">نمایشگر تصویر دوربین را با آخرین فریم دریافتی از وب‌کم به‌روز می‌کند.</div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">send_cmd(cmd_type, data)</div>
+                <div class="method-desc" lang="en">Sends a command to the rover via WebSocket.</div>
+                <div class="method-desc" lang="fa">یک دستور را از طریق WebSocket به مریخ‌نورد ارسال می‌کند.</div>
+                <div class="params">
+                    <span class="param-name">cmd_type</span>: 
+                    <span lang="en">Command type (e.g., "move", "arm")</span>
+                    <span lang="fa">نوع دستور (مثلاً "move", "arm")</span>
+                    <br>
+                    <span class="param-name">data</span>: 
+                    <span lang="en">Dictionary containing command parameters</span>
+                    <span lang="fa">دیکشنری شامل پارامترهای دستور</span>
+                </div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">receive_data()</div>
+                <div class="method-desc" lang="en">Asynchronously receives and processes telemetry data from the rover.</div>
+                <div class="method-desc" lang="fa">داده‌های تلهمتری را به صورت غیرهمزمان از مریخ‌نورد دریافت و پردازش می‌کند.</div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">handle_movement_keys()</div>
+                <div class="method-desc" lang="en">Handles continuous movement based on currently pressed keys.</div>
+                <div class="method-desc" lang="fa">حرکت پیوسته را بر اساس کلیدهای فشرده شده مدیریت می‌کند.</div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">keyPressEvent(event)</div>
+                <div class="method-desc" lang="en">Handles keyboard input for rover control.</div>
+                <div class="method-desc" lang="fa">ورودی صفحه کلید برای کنترل مریخ‌نورد را مدیریت می‌کند.</div>
+            </div>
+            
+            <div class="method">
+                <div class="method-name">keyReleaseEvent(event)</div>
+                <div class="method-desc" lang="en">Handles key release events to stop movement when keys are released.</div>
+                <div class="method-desc" lang="fa">رخدادهای رها کردن کلید را برای توقف حرکت هنگام رها شدن کلیدها مدیریت می‌کند.</div>
+            </div>
+        </div>
+    </section>
+    
+    <section>
+        <h2 lang="en">Communication Protocol</h2>
+        <h2 lang="fa">پروتکل ارتباطی</h2>
+        
+        <div class="note">
+            <p lang="en">The application communicates with the rover using WebSocket (ws://localhost:8765) and JSON messages.</p>
+            <p lang="fa">برنامه با مریخ‌نورد از طریق WebSocket (ws://localhost:8765) و پیام‌های JSON ارتباط برقرار می‌کند.</p>
+        </div>
+        
+        <h3 lang="en">Command Structure</h3>
+        <h3 lang="fa">ساختار دستورات</h3>
+        <div class="code-block">
+{
+    "cmd": "command_type",
+    ...additional_parameters
+}
+        </div>
+        
+        <h3 lang="en">Command Types</h3>
+        <h3 lang="fa">انواع دستورات</h3>
+        <ul>
+            <li>
+                <span lang="en"><strong>move</strong> - Controls rover movement</span>
+                <span lang="fa"><strong>move</strong> - کنترل حرکت مریخ‌نورد</span>
+                <div class="code-block">
+{
+    "cmd": "move",
+    "dir": "direction",  // forward, backward, left, right, stop
+    "speed": 1.0         // speed multiplier (0.5, 1, 2)
+}
+                </div>
+            </li>
+            <li>
+                <span lang="en"><strong>arm</strong> - Controls the rover arm</span>
+                <span lang="fa"><strong>arm</strong> - کنترل بازوی مریخ‌نورد</span>
+                <div class="code-block">
+{
+    "cmd": "arm",
+    "joint": 1,          // joint identifier
+    "angle": 90          // angle in degrees (0-180)
+}
+                </div>
+            </li>
+            <li>
+                <span lang="en"><strong>flag</strong> - Controls the flag mechanism</span>
+                <span lang="fa"><strong>flag</strong> - کنترل مکانیزم پرچم</span>
+                <div class="code-block">
+{
+    "cmd": "flag",
+    "action": "drop"     // currently only supports drop
+}
+                </div>
+            </li>
+        </ul>
+        
+        <h3 lang="en">Telemetry Structure</h3>
+        <h3 lang="fa">ساختار تلهمتری</h3>
+        <div class="code-block">
+{
+    "battery": 75,       // battery percentage
+    "temp": 32.5,        // temperature in °C
+    "imu": {             // orientation data
+        "pitch": 5.2,
+        "roll": 1.8
+    },
+    "arm": 90            // current arm angle
+}
+        </div>
+    </section>
+    
+    <section>
+        <h2 lang="en">Dependencies</h2>
+        <h2 lang="fa">وابستگی‌ها</h2>
+        <ul>
+            <li lang="en">Python 3.7+</li>
+            <li lang="fa">پایتون ۳.۷ به بالا</li>
+            
+            <li lang="en">PyQt5</li>
+            <li lang="fa">PyQt5</li>
+            
+            <li lang="en">qasync</li>
+            <li lang="fa">qasync</li>
+            
+            <li lang="en">websockets</li>
+            <li lang="fa">websockets</li>
+            
+            <li lang="en">opencv-python</li>
+            <li lang="fa">opencv-python</li>
+            
+            <li lang="en">numpy</li>
+            <li lang="fa">numpy</li>
+        </ul>
+    </section>
+    
+    <footer>
+        <p lang="en">x0 Rover Controller Documentation | to the moon team | 2025</p>
+        <p lang="fa">مستندات کنترلر ماه‌نورد x0 | to the moon | ۱۴۰۴</p>
+    </footer>
+
+    <script>
+        function setLanguage(lang) {
+            if (lang === 'fa') {
+                document.body.classList.add('persian');
+                document.body.dir = 'rtl';
+            } else {
+                document.body.classList.remove('persian');
+                document.body.dir = 'ltr';
+            }
+            
+            // Update active button
+            document.querySelectorAll('.lang-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('lang') === lang);
+            });
+            
+            // Set a cookie or localStorage to remember language preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+        
+        // Check for saved language preference
+        const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        setLanguage(preferredLanguage);
+    </script>
+</body>
+</html>

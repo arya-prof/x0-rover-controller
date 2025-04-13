@@ -6,11 +6,12 @@ import websockets
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,
     QSlider, QFileDialog, QGridLayout, QHBoxLayout, QStyle,
-    QGroupBox, QFrame
+    QGroupBox, QFrame, QScrollArea, QSizePolicy
 )
-from PyQt5.QtCore import Qt, QSize, QTimer, QRectF
+from PyQt5.QtCore import Qt, QSize, QTimer, QRectF, QDateTime
 from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter, QColor, QFont, QPalette
 from qasync import QEventLoop
+from ultralytics import YOLO
 
 
 class CircularProgress(QLabel):
@@ -64,26 +65,35 @@ class RoverGUI(QWidget):
         super().__init__()
         self.setWindowTitle("x0 Rover Controller (to the moon team)")
         self.ws = None
-        self.cap = cv2.VideoCapture(0)  # Use default webcam
+        
+        # First initialize UI
         self.init_ui()
+        
+        # Clear any existing camera
+        self.cap = None
+        
+        # Initialize webcam with a delay to ensure UI is ready
+        QTimer.singleShot(1000, self.initialize_camera)
 
         QTimer.singleShot(0, self.start_async_connection)
 
-        # Start camera update timer
-        self.camera_timer = QTimer()
-        self.camera_timer.timeout.connect(self.update_camera)
-        self.camera_timer.start(30)  # 30ms ~ 30 FPS
-
         # Default speed values
-        self.speed_factor = 1  # Normal speed by default
+        self.speed_factor = 1
         self.last_telemetry = {}
 
         # Keyboard controls
         self.pressed_keys = set()
         self.movement_timer = QTimer()
         self.movement_timer.timeout.connect(self.handle_movement_keys)
-        self.movement_timer.start(100)  # Check keys every 100ms
-        self.setFocusPolicy(Qt.StrongFocus)  # Ensure widget receives key events
+        self.movement_timer.start(100)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+        # Initialize YOLO model with verbose=False to prevent terminal printing
+        self.model = YOLO('yolov8n.pt', verbose=False)
+        self.detection_enabled = False
+
+        self.telemetry_logs = []  # Add this to store logs
+        self.max_logs = 50  # Keep last 50 logs
 
     def init_ui(self):
         # Main layout
@@ -96,7 +106,7 @@ class RoverGUI(QWidget):
         left_panel.setContentsMargins(10, 10, 10, 10)
 
         # Right panel (camera and telemetry)
-        right_panel = QVBoxLayout()
+        right_panel = QVBoxLayout()  # Back to vertical layout
         right_panel.setSpacing(15)
         right_panel.setContentsMargins(10, 10, 10, 10)
 
@@ -214,6 +224,46 @@ class RoverGUI(QWidget):
         arm_group.setLayout(arm_layout)
         left_panel.addWidget(arm_group)
 
+        # Camera control group
+        camera_control_group = QGroupBox("Camera Control (R/T)")
+        camera_layout = QVBoxLayout()
+        
+        self.camera_slider = QSlider(Qt.Horizontal)
+        self.camera_slider.setMinimum(-90)  # -90 degrees
+        self.camera_slider.setMaximum(90)   # +90 degrees
+        self.camera_slider.setValue(0)       # Start at center
+        self.camera_slider.setTickInterval(15)
+        self.camera_slider.setTickPosition(QSlider.TicksBelow)
+        self.camera_slider.valueChanged.connect(self.camera_moved)
+        
+        self.lbl_camera = QLabel("Camera Angle: 0°")
+        self.lbl_camera.setAlignment(Qt.AlignCenter)
+        
+        # Center camera button
+        self.center_camera_btn = QPushButton("Center Camera (C)")
+        self.center_camera_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px;
+                background-color: #5a8;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #496;
+            }
+            QPushButton:pressed {
+                background-color: #385;
+            }
+        """)
+        self.center_camera_btn.clicked.connect(self.center_camera)
+        
+        camera_layout.addWidget(self.lbl_camera)
+        camera_layout.addWidget(self.camera_slider)
+        camera_layout.addWidget(self.center_camera_btn)
+        camera_control_group.setLayout(camera_layout)
+        left_panel.addWidget(camera_control_group)
+
         # Media buttons
         media_group = QGroupBox("Media")
         media_layout = QHBoxLayout()
@@ -226,8 +276,15 @@ class RoverGUI(QWidget):
         self.take_photo_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
         self.take_photo_btn.clicked.connect(self.take_photo)
         
+        # Add detection toggle button with 'O' shortcut
+        self.detection_btn = QPushButton("Toggle Detection (O)")
+        self.detection_btn.setCheckable(True)
+        self.detection_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogContentsView))
+        self.detection_btn.clicked.connect(self.toggle_detection)
+        
         media_layout.addWidget(self.screenshot_btn)
         media_layout.addWidget(self.take_photo_btn)
+        media_layout.addWidget(self.detection_btn)
         media_group.setLayout(media_layout)
         left_panel.addWidget(media_group)
 
@@ -239,33 +296,68 @@ class RoverGUI(QWidget):
         # Camera preview
         camera_group = QGroupBox("Camera Feed")
         camera_layout = QVBoxLayout()
+        camera_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         
-        self.camera_label = QLabel("Camera loading...")
-        self.camera_label.setMinimumSize(640, 480)
+        self.camera_label = QLabel("Initializing camera...")
+        self.camera_label.setMinimumSize(640, 480)  # Changed from setFixedSize to setMinimumSize
         self.camera_label.setAlignment(Qt.AlignCenter)
+        self.camera_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Allow expansion
         self.camera_label.setStyleSheet("""
-            border: 2px solid #444;
-            border-radius: 5px;
-            background: #222;
-            color: #fff;
-            padding: 10px;
+            QLabel {
+                border: 2px solid #444;
+                border-radius: 5px;
+                background: #222;
+                color: #fff;
+            }
         """)
         
-        camera_layout.addWidget(self.camera_label)
+        camera_layout.addWidget(self.camera_label, 1)  # Added stretch factor
         camera_group.setLayout(camera_layout)
-        right_panel.addWidget(camera_group)
+        right_panel.addWidget(camera_group, 70)
 
         # Detailed telemetry
-        telemetry_group = QGroupBox("Detailed Telemetry")
+        telemetry_group = QGroupBox("Telemetry History")
         telemetry_layout = QVBoxLayout()
         
         self.telemetry_label = QLabel("Waiting for telemetry data...")
         self.telemetry_label.setWordWrap(True)
-        self.telemetry_label.setStyleSheet("font-family: monospace;")
+        self.telemetry_label.setStyleSheet("""
+            font-family: monospace;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            line-height: 1.2;
+        """)
         
-        telemetry_layout.addWidget(self.telemetry_label)
+        # Add scroll area for telemetry with better styling
+        scroll = QScrollArea()
+        scroll.setWidget(self.telemetry_label)
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #333;
+                width: 10px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #666;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        """)
+        
+        telemetry_layout.addWidget(scroll)
         telemetry_group.setLayout(telemetry_layout)
-        right_panel.addWidget(telemetry_group)
+        right_panel.addWidget(telemetry_group, 30)
 
         # Apply styles
         self.apply_styles()
@@ -352,21 +444,80 @@ class RoverGUI(QWidget):
             }
         """)
 
-    def update_camera(self):
-        ret, frame = self.cap.read()
-        if ret:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            height, width, channel = frame.shape
-            bytes_per_line = 3 * width
-            qimg = QImage(frame.data, width, height, bytes_per_line, QImage.Format_RGB888)
-            pixmap = QPixmap.fromImage(qimg).scaled(
-                self.camera_label.width(), 
-                self.camera_label.height(), 
-                Qt.KeepAspectRatio
-            )
-            self.camera_label.setPixmap(pixmap)
+    def initialize_camera(self):
+        """Initialize the webcam"""
+        if self.cap is not None:
+            self.cap.release()
+        
+        self.cap = cv2.VideoCapture(0)
+        if self.cap.isOpened():
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Back to larger resolution
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # Back to larger resolution
+            self.telemetry_label.setText("Webcam initialized")
+            
+            # Start camera update timer
+            if hasattr(self, 'camera_timer'):
+                self.camera_timer.stop()
+            self.camera_timer = QTimer()
+            self.camera_timer.timeout.connect(self.update_camera)
+            self.camera_timer.start(30)
         else:
+            self.telemetry_label.setText("Failed to open webcam")
+            self.camera_label.setText("No camera available")
+
+    def update_camera(self):
+        """Update the camera feed"""
+        if self.cap is None or not self.cap.isOpened():
             self.camera_label.setText("Camera not available")
+            return
+        
+        ret, frame = self.cap.read()
+        if not ret:
+            self.camera_label.setText("Failed to read camera frame")
+            return
+        
+        try:
+            if self.detection_enabled:
+                results = self.model(frame, verbose=False)
+                for result in results:
+                    boxes = result.boxes
+                    for box in boxes:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        cls = int(box.cls[0])
+                        conf = float(box.conf[0])
+                        name = result.names[cls]
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        label = f'{name} {conf:.2f}'
+                        cv2.putText(frame, label, (x1, y1 - 10), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+            # Convert to RGB for Qt
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Create QImage
+            height, width, channel = rgb_frame.shape
+            bytes_per_line = 3 * width
+            q_image = QImage(rgb_frame.data, width, height, 
+                            bytes_per_line, QImage.Format_RGB888).copy()
+            
+            # Scale to fill the entire label
+            label_size = self.camera_label.size()
+            scaled_pixmap = QPixmap.fromImage(q_image).scaled(
+                label_size.width(),
+                label_size.height(),
+                Qt.IgnoreAspectRatio,
+                Qt.SmoothTransformation
+            )
+            
+            # Update the label
+            self.camera_label.setPixmap(scaled_pixmap)
+            
+        except Exception as e:
+            timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+            error_log = f"\n[{timestamp}] Error: {str(e)}"
+            self.telemetry_logs.append(error_log)
+            combined_logs = "".join(reversed(self.telemetry_logs))
+            self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
 
     def start_async_connection(self):
         asyncio.create_task(self.connect_websocket())
@@ -396,31 +547,39 @@ class RoverGUI(QWidget):
                 telemetry = json.loads(message)
                 self.last_telemetry = telemetry
                 
-                # Update battery
+                # Silently update the widgets
                 battery = telemetry.get("battery", "--")
                 self.battery_widget.set_battery_percentage(battery)
                 self.battery_label.setText(f"Battery: {battery}%")
                 
-                # Update temperature
                 temp = telemetry.get("temp", "--")
                 self.temp_label.setText(f"Temperature: {temp}°C")
                 
-                # Update IMU data
                 imu = telemetry.get("imu", {})
                 pitch = imu.get("pitch", "--")
                 roll = imu.get("roll", "--")
                 self.imu_label.setText(f"Orientation: Pitch {pitch}°, Roll {roll}°")
                 
-                # Update arm position
                 arm = telemetry.get("arm", "--")
                 self.arm_label.setText(f"Arm Position: {arm}°")
                 
-                # Update detailed telemetry
-                display = json.dumps(telemetry, indent=2)
-                self.telemetry_label.setText(f"Telemetry:\n{display}")
+                # Add to telemetry history without printing
+                timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+                log_entry = f"\n[{timestamp}] New telemetry data received"
+                self.telemetry_logs.append(log_entry)
+                
+                if len(self.telemetry_logs) > self.max_logs:
+                    self.telemetry_logs.pop(0)
+                
+                combined_logs = "".join(reversed(self.telemetry_logs))
+                self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
                 
         except Exception as e:
-            self.telemetry_label.setText(f"Disconnected: {e}")
+            timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+            error_log = f"\n[{timestamp}] Connection error: {str(e)}"
+            self.telemetry_logs.append(error_log)
+            combined_logs = "".join(reversed(self.telemetry_logs))
+            self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
 
     def arm_moved(self, value):
         self.lbl_arm.setText(f"Arm Angle: {value}°")
@@ -504,6 +663,20 @@ class RoverGUI(QWidget):
         else:
             self.telemetry_label.setText("Error capturing photo.")
 
+    def toggle_detection(self):
+        """Toggle object detection on/off"""
+        self.detection_enabled = self.detection_btn.isChecked()
+        status = "enabled" if self.detection_enabled else "disabled"
+        
+        # Add to telemetry history
+        timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+        log_entry = f"\n[{timestamp}] Object detection {status}"
+        self.telemetry_logs.append(log_entry)
+        
+        # Update display
+        combined_logs = "".join(reversed(self.telemetry_logs))
+        self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
+
     def keyPressEvent(self, event):
         """Handle key press events for movement controls."""
         key = event.key()
@@ -547,9 +720,23 @@ class RoverGUI(QWidget):
         elif key == Qt.Key_P:
             self.take_photo()
             
+        # Change to 'O' key for toggling detection
+        elif key == Qt.Key_O:
+            self.detection_btn.click()  # Simulate button click to toggle detection
+            
         # Escape to exit
         elif key == Qt.Key_Escape:
             self.close()
+            
+        # Camera control keys (R/T for up/down)
+        elif key == Qt.Key_R:
+            new_value = min(self.camera_slider.value() + 5, 90)
+            self.camera_slider.setValue(new_value)
+        elif key == Qt.Key_T:
+            new_value = max(self.camera_slider.value() - 5, -90)
+            self.camera_slider.setValue(new_value)
+        elif key == Qt.Key_C:
+            self.center_camera()
             
         event.accept()
 
@@ -600,10 +787,36 @@ class RoverGUI(QWidget):
         self.send_cmd("move", {"dir": direction})
 
     def closeEvent(self, event):
-        self.cap.release()
+        """Clean up resources when closing"""
+        if self.cap is not None:
+            self.cap.release()
         if self.ws:
             asyncio.get_event_loop().run_until_complete(self.ws.close())
         event.accept()
+
+    def camera_moved(self, value):
+        """Handle camera angle changes"""
+        self.lbl_camera.setText(f"Camera Angle: {value}°")
+        self.send_cmd("camera", {"angle": value})
+        
+        # Add to telemetry history
+        timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+        log_entry = f"\n[{timestamp}] Camera rotated to {value}°"
+        self.telemetry_logs.append(log_entry)
+        combined_logs = "".join(reversed(self.telemetry_logs))
+        self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
+
+    def center_camera(self):
+        """Center the camera (0 degrees)"""
+        self.camera_slider.setValue(0)
+        self.send_cmd("camera", {"angle": 0})
+        
+        # Add to telemetry history
+        timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+        log_entry = f"\n[{timestamp}] Camera centered"
+        self.telemetry_logs.append(log_entry)
+        combined_logs = "".join(reversed(self.telemetry_logs))
+        self.telemetry_label.setText(f"Telemetry History:\n{combined_logs}")
 
 
 if __name__ == "__main__":

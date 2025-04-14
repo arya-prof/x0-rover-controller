@@ -125,11 +125,10 @@ class RoverGUI(QWidget):
         
         # Telemetry labels
         self.battery_label = QLabel("Battery: --%")
-        self.temp_label = QLabel("Temperature: --°C")
         self.imu_label = QLabel("Orientation: --")
         self.arm_label = QLabel("Arm Position: --")
         
-        for label in [self.battery_label, self.temp_label, self.imu_label, self.arm_label]:
+        for label in [self.battery_label, self.imu_label, self.arm_label]:
             label.setStyleSheet("font-size: 12px;")
             battery_layout.addWidget(label)
         
@@ -551,9 +550,6 @@ class RoverGUI(QWidget):
                 battery = telemetry.get("battery", "--")
                 self.battery_widget.set_battery_percentage(battery)
                 self.battery_label.setText(f"Battery: {battery}%")
-                
-                temp = telemetry.get("temp", "--")
-                self.temp_label.setText(f"Temperature: {temp}°C")
                 
                 imu = telemetry.get("imu", {})
                 pitch = imu.get("pitch", "--")

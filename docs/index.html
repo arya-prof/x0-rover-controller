@@ -418,6 +418,40 @@
                     <li lang="fa">داده‌های خام JSON</li>
                 </ul>
             </div>
+
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Camera Control</div>
+                <div class="ui-title" lang="fa">کنترل دوربین</div>
+                <p lang="en">Controls for camera rotation:</p>
+                <p lang="fa">کنترل‌های چرخش دوربین:</p>
+                <ul>
+                    <li lang="en">Slider for angle control (-90° to +90°)</li>
+                    <li lang="fa">اسلایدر برای کنترل زاویه (۹۰- تا ۹۰+ درجه)</li>
+                    
+                    <li lang="en">Center camera button (C)</li>
+                    <li lang="fa">دکمه مرکز کردن دوربین (C)</li>
+                    
+                    <li lang="en">Keyboard controls (R/T for up/down)</li>
+                    <li lang="fa">کنترل با صفحه کلید (R/T برای بالا/پایین)</li>
+                </ul>
+            </div>
+
+            <div class="ui-component">
+                <div class="ui-title" lang="en">Object Detection</div>
+                <div class="ui-title" lang="fa">تشخیص اشیاء</div>
+                <p lang="en">YOLO-based object detection system:</p>
+                <p lang="fa">سیستم تشخیص اشیاء مبتنی بر YOLO:</p>
+                <ul>
+                    <li lang="en">Toggle detection on/off (O key)</li>
+                    <li lang="fa">روشن/خاموش کردن تشخیص (کلید O)</li>
+                    
+                    <li lang="en">Real-time object detection and labeling</li>
+                    <li lang="fa">تشخیص و برچسب‌گذاری اشیاء در زمان واقعی</li>
+                    
+                    <li lang="en">Confidence score display</li>
+                    <li lang="fa">نمایش درصد اطمینان</li>
+                </ul>
+            </div>
         </div>
     </section>
     
@@ -477,6 +511,22 @@
             <div class="shortcut">
                 <span lang="en"><span class="key">Esc</span> - Exit application</span>
                 <span lang="fa"><span class="key">Esc</span> - خروج از برنامه</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">R</span> - Rotate camera up</span>
+                <span lang="fa"><span class="key">R</span> - چرخش دوربین به بالا</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">T</span> - Rotate camera down</span>
+                <span lang="fa"><span class="key">T</span> - چرخش دوربین به پایین</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">C</span> - Center camera</span>
+                <span lang="fa"><span class="key">C</span> - مرکز کردن دوربین</span>
+            </div>
+            <div class="shortcut">
+                <span lang="en"><span class="key">O</span> - Toggle object detection</span>
+                <span lang="fa"><span class="key">O</span> - روشن/خاموش کردن تشخیص اشیاء</span>
             </div>
         </div>
     </section>
@@ -621,6 +671,16 @@
 }
                 </div>
             </li>
+            <li>
+                <span lang="en"><strong>camera</strong> - Controls camera rotation</span>
+                <span lang="fa"><strong>camera</strong> - کنترل چرخش دوربین</span>
+                <div class="code-block">
+{
+    "cmd": "camera",
+    "angle": 45          // angle in degrees (-90 to +90)
+}
+                </div>
+            </li>
         </ul>
         
         <h3 lang="en">Telemetry Structure</h3>
@@ -659,6 +719,9 @@
             
             <li lang="en">numpy</li>
             <li lang="fa">numpy</li>
+            
+            <li lang="en">ultralytics (YOLO)</li>
+            <li lang="fa">ultralytics (YOLO)</li>
         </ul>
     </section>
     
